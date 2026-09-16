@@ -1,0 +1,93 @@
+@startuml diagrama-classes
+' Diagrama de classes do dominio -- Sistema Academico
+' Projeto: camada de persistencia com mapeamento objeto-relacional (ORMLite)
+
+title Diagrama de classes — Sistema Academico
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam nodesep 70
+skinparam ranksep 60
+skinparam class {
+  BackgroundColor #FDFDFD
+  BorderColor #2F5D8C
+  ArrowColor #2F5D8C
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #B8A369
+}
+
+class Professor {
+  - id : int
+  - matricula : String
+  - nome : String
+  - email : String
+  - titulacao : Titulacao
+}
+
+enum Titulacao {
+  GRADUADO
+  ESPECIALISTA
+  MESTRE
+  DOUTOR
+}
+
+class Curso {
+  - id : int
+  - nome : String
+  - sigla : String
+  - cargaHoraria : int
+}
+
+class Estudante {
+  - id : int
+  - matricula : String
+  - nomeCompleto : String
+  - dataNascimento : Date
+}
+
+class Disciplina {
+  - id : int
+  - codigo : String
+  - nome : String
+  - cargaHoraria : int
+}
+
+class Inscricao {
+  - id : int
+  - semestre : String
+  - nota : Double
+  - frequencia : int
+  + isAprovado() : boolean
+}
+
+' ---------------------------------------------------------------- 1:1
+Curso "0..1" -- "0..1" Professor : coordenado por >
+
+' ---------------------------------------------------------------- 1:N
+Curso "1" -- "0..*" Estudante : matricula >
+Curso "1" -- "0..*" Disciplina : oferece >
+Professor "0..1" -- "0..*" Disciplina : ministra >
+
+' ---------------------------------------------------------------- N:M
+Estudante "0..*" -- "0..*" Disciplina : cursa >
+(Estudante, Disciplina) .. Inscricao
+
+Professor .right.> Titulacao : usa
+
+note right of Inscricao
+  Classe associativa da relacao N:M.
+  Seus atributos proprios (semestre, nota,
+  frequencia) so existem para o par
+  (Estudante, Disciplina).
+end note
+
+note bottom of Curso
+  Conectividade 1:1 opcional nos dois
+  extremos: um curso pode nao ter
+  coordenador e um professor coordena
+  no maximo um curso.
+end note
+
+@enduml

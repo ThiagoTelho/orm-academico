@@ -1,0 +1,108 @@
+@startuml diagrama-persistencia
+' Arquitetura da camada de persistencia (padrao DAO / Repository)
+
+title Camada de persistencia — padrao Repository sobre ORMLite
+
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam nodesep 25
+skinparam ranksep 70
+skinparam shadowing false
+skinparam package {
+  BackgroundColor #F7F9FC
+  BorderColor #2F5D8C
+}
+skinparam class {
+  BackgroundColor #FDFDFD
+  BorderColor #2F5D8C
+  ArrowColor #2F5D8C
+}
+
+package "model (objetos de negocio)" {
+  class Curso
+  class Professor
+  class Estudante
+  class Disciplina
+  class Inscricao
+}
+
+package "persistence (camada de persistencia)" {
+  class Database {
+    - databaseName : String
+    + getConnection() : JdbcConnectionSource
+    + close()
+  }
+
+  abstract class "Repositorio<T, ID>" as Repositorio {
+    # dao : Dao<T, ID>
+    + criarTabela()
+    + create(T) : T
+    + loadFromId(ID) : T
+    + loadAll() : List<T>
+    + update(T) : T
+    + delete(T)
+    + count() : long
+  }
+
+  class Persistencia {
+    + criarEsquema()
+    + recriarEsquema()
+    + ddl() : List<String>
+    + professores() : ProfessorRepositorio
+    + cursos() : CursoRepositorio
+    + estudantes() : EstudanteRepositorio
+    + disciplinas() : DisciplinaRepositorio
+    + inscricoes() : InscricaoRepositorio
+  }
+
+  class ProfessorRepositorio {
+    + buscarPorMatricula(String) : Professor
+  }
+  class CursoRepositorio {
+    + buscarPorSigla(String) : Curso
+    + coordenadoPor(Professor) : Curso
+    + definirCoordenador(Curso, Professor) : Curso
+  }
+  class EstudanteRepositorio {
+    + buscarPorMatricula(String) : Estudante
+    + doCurso(Curso) : List<Estudante>
+  }
+  class DisciplinaRepositorio {
+    + doCurso(Curso) : List<Disciplina>
+    + ministradasPor(Professor) : List<Disciplina>
+  }
+  class InscricaoRepositorio {
+    + matricular(Estudante, Disciplina, String) : Inscricao
+    + disciplinasDe(Estudante) : List<Disciplina>
+    + estudantesDe(Disciplina) : List<Estudante>
+    + historicoDe(Estudante) : List<Inscricao>
+  }
+}
+
+package "ORMLite + JDBC" {
+  class "Dao<T, ID>" as Dao
+  class TableUtils
+}
+
+Repositorio <|-- ProfessorRepositorio
+Repositorio <|-- CursoRepositorio
+Repositorio <|-- EstudanteRepositorio
+Repositorio <|-- DisciplinaRepositorio
+Repositorio <|-- InscricaoRepositorio
+
+Persistencia *-- Database
+Persistencia o-- ProfessorRepositorio
+Persistencia o-- CursoRepositorio
+Persistencia o-- EstudanteRepositorio
+Persistencia o-- DisciplinaRepositorio
+Persistencia o-- InscricaoRepositorio
+
+Repositorio --> Dao : delega
+Repositorio ..> TableUtils : gera o esquema
+Repositorio ..> Curso : mapeia
+Repositorio ..> Estudante : mapeia
+
+class "SQLite (academico.sqlite)" as sqlite <<banco de dados>>
+Dao --> sqlite : JDBC
+
+@enduml

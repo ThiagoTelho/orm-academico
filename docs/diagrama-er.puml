@@ -1,0 +1,86 @@
+@startuml diagrama-er
+' Diagrama Entidade-Relacionamento -- resultado do mapeamento das classes
+' para tabelas. Notacao "pe de galinha" (crow's foot):
+'   ||--o{  um para muitos (zero ou mais do lado filho)
+'   ||--o|  um para no maximo um (1:1)
+' PK = chave primaria, FK = chave estrangeira, U = restricao UNIQUE.
+
+title Diagrama E-R — esquema gerado pelo ORM (SQLite)
+
+hide circle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam class {
+  BackgroundColor #FDFDFD
+  BorderColor #2F5D8C
+  ArrowColor #2F5D8C
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #B8A369
+}
+
+entity "professor" as professor {
+  * id : INTEGER <<PK, AUTOINCREMENT>>
+  --
+  * matricula : VARCHAR <<U>>
+  * nome : VARCHAR
+  email : VARCHAR
+  titulacao : VARCHAR
+}
+
+entity "curso" as curso {
+  * id : INTEGER <<PK, AUTOINCREMENT>>
+  --
+  * nome : VARCHAR <<U>>
+  * sigla : VARCHAR <<U>>
+  carga_horaria : INTEGER
+  coordenador_id : INTEGER <<FK, U>>
+}
+
+entity "estudante" as estudante {
+  * id : INTEGER <<PK, AUTOINCREMENT>>
+  --
+  * matricula : VARCHAR <<U>>
+  * nome_completo : VARCHAR
+  data_nascimento : VARCHAR
+  * curso_id : INTEGER <<FK>>
+}
+
+entity "disciplina" as disciplina {
+  * id : INTEGER <<PK, AUTOINCREMENT>>
+  --
+  * codigo : VARCHAR <<U>>
+  * nome : VARCHAR
+  carga_horaria : INTEGER
+  * curso_id : INTEGER <<FK>>
+  professor_id : INTEGER <<FK>>
+}
+
+entity "inscricao" as inscricao {
+  * id : INTEGER <<PK, AUTOINCREMENT>>
+  --
+  * estudante_id : INTEGER <<FK>>
+  * disciplina_id : INTEGER <<FK>>
+  * semestre : VARCHAR
+  nota : DOUBLE
+  frequencia : INTEGER
+  --
+  UNIQUE (estudante_id, disciplina_id, semestre)
+}
+
+professor ||--o| curso : "1:1 coordena\n(coordenador_id UNIQUE)"
+curso     ||--o{ estudante : "1:N"
+curso     ||--o{ disciplina : "1:N"
+professor ||--o{ disciplina : "1:N ministra"
+estudante ||--o{ inscricao : "1:N"
+disciplina ||--o{ inscricao : "1:N"
+
+note bottom of inscricao
+  Relacao de associacao: e ela que
+  representa o N:M entre estudante e
+  disciplina. Os atributos da classe
+  associativa viraram colunas desta tabela.
+end note
+
+@enduml
